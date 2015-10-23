@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     int fullscreen = 0;
     int i;
     int old_height = 0;
-    Window last_focused, current_focused;
+    Window last_focused, current_focused, gained_focus;
 	
     /* strip the path from argv[0] if there is one */
     progname = strrchr(argv[0], '/');
@@ -129,6 +129,17 @@ int main(int argc, char *argv[])
 		XSetInputFocus(dpy, last_focused, RevertToPointerRoot,
 			       CurrentTime);
 	    break;
+	case FocusOut:
+		roll (UP);
+		hidden = 1;
+		XGetInputFocus(dpy, &gained_focus, &revert_to);
+	    if (gained_focus && (gained_focus != win) && (gained_focus != termwin))
+		    XSetInputFocus(dpy, gained_focus,
+			       RevertToPointerRoot, CurrentTime);
+		else
+		    XSetInputFocus(dpy, last_focused, RevertToPointerRoot, CurrentTime);
+		XSync(dpy, True);
+		break;
 	case KeyPress:
 	    key = XKeycodeToKeysym(dpy, event.xkey.keycode, 0);
 	    if (key == opt_key) {
@@ -159,6 +170,10 @@ int main(int argc, char *argv[])
 
 		    transparency_hack();
 		    hidden = 0;
+
+			XSelectInput(dpy, win,
+				 SubstructureNotifyMask | EnterWindowMask | LeaveWindowMask
+				 | KeyPressMask | ButtonPressMask | ButtonReleaseMask | FocusChangeMask);
 		}
 		break;
 	    }
@@ -343,7 +358,7 @@ void init_win()
 			CWOverrideRedirect | CWBackPixel, &attrib);
     XSelectInput(dpy, win,
 		 SubstructureNotifyMask | EnterWindowMask | LeaveWindowMask
-		 | KeyPressMask | ButtonPressMask | ButtonReleaseMask);
+		 | KeyPressMask | ButtonPressMask | ButtonReleaseMask | FocusChangeMask);
     XAllocNamedColor(dpy, DefaultColormap(dpy, screen), opt_color, &color,
 		     &dummy_color);
     XSetWindowBackground(dpy, win, color.pixel);

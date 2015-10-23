@@ -47,7 +47,7 @@ Window termwin;
 char *progname, command[256];
 int revert_to;
 int screen;
-int opt_x, opt_width, opt_height, opt_delay, opt_bw, opt_step,
+int opt_x, opt_width, opt_height, opt_bottom_margin, opt_delay, opt_bw, opt_step,
   height, opt_restart, opt_restart_hidden;
 char *opt_color;
 char *opt_term;
@@ -279,7 +279,9 @@ void get_defaults()
     opt = XGetDefault(dpy, progname, "handleWidth");
     opt_bw = opt ? atoi(opt) : 3;
     opt = XGetDefault(dpy, progname, "consoleHeight");
-    opt_height = opt ? atoi(opt) : 10;
+    opt_height = opt ? atoi(opt) : 0;
+    opt = XGetDefault(dpy, progname, "bottomMargin");
+    opt_bottom_margin = opt ? atoi(opt) : 0;
     opt = XGetDefault(dpy, progname, "xOffset");
     opt_x = opt ? atoi(opt) : 0;
     opt = XGetDefault(dpy, progname, "aniDelay");
@@ -385,8 +387,12 @@ void init_xterm(move)
     size = XAllocSizeHints();
     XGetWMNormalHints(dpy, termwin, size, &dummy);
     resize_inc = size->height_inc;
-    if (move)
-	height = resize_inc * opt_height;
+    if (move) {
+		if (opt_height)
+			height = resize_inc * opt_height;
+		else
+			height = DisplayHeight(dpy, screen) - opt_bottom_margin;
+	}
     XFree(size);
     XResizeWindow(dpy, termwin, opt_width, height);
     XResizeWindow(dpy, win, opt_width, height + opt_bw);
